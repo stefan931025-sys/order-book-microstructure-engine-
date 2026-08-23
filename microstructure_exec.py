@@ -1,57 +1,63 @@
-import pandas as pd
+import argparse
+import time
 import numpy as np
+import pandas as pd
 
-class OrderBookMicrostructure:
+class OrderBookMicrostructureProgram:
     """
-    Models Limit Order Book (LOB) order flow imbalance (OFI) and simulates TWAP/VWAP execution slippage.
+    Live Execution Microstructure & Order Flow Imbalance Simulator.
     """
-    def __init__(self, bid_prices: list, bid_volumes: list, ask_prices: list, ask_volumes: list):
-        self.df = pd.DataFrame({
+    def __init__(self, base_price: float = 150.0):
+        self.base_price = base_price
+
+    def generate_lob_snapshot(self) -> pd.DataFrame:
+        ticks = 10
+        bid_prices = np.sort(self.base_price - np.random.uniform(0.01, 0.20, ticks))[::-1]
+        ask_prices = np.sort(self.base_price + np.random.uniform(0.01, 0.20, ticks))
+        bid_vols = np.random.randint(100, 2500, ticks)
+        ask_vols = np.random.randint(100, 2500, ticks)
+
+        return pd.DataFrame({
             "bid_price": bid_prices,
-            "bid_vol": bid_volumes,
+            "bid_vol": bid_vols,
             "ask_price": ask_prices,
-            "ask_vol": ask_volumes
+            "ask_vol": ask_vols
         })
 
-    def calculate_order_flow_imbalance(self) -> float:
-        """Calculates normalized Order Flow Imbalance (OFI)."""
-        bid_delta = self.df["bid_vol"].diff().fillna(0)
-        ask_delta = self.df["ask_vol"].diff().fillna(0)
-        ofi = bid_delta - ask_delta
-        return ofi.mean()
+    def run_simulation(self, order_size: int, is_buy: bool, steps: int = 5) -> str:
+        logs = []
+        print(f"\n--- Initiating Microstructure Simulation for {order_size} shares ({'BUY' if is_buy else 'SELL'}) ---")
 
-    def simulate_execution_slippage(self, order_size: float, is_buy: bool) -> dict:
-        spread = self.df["ask_price"].mean() - self.df["bid_price"].mean()
-        market_depth = self.df["bid_vol"].mean() + self.df["ask_vol"].mean()
-        
-        # Simple impact parameter model (Kyle's Lambda approximation)
-        impact_factor = 0.0001
-        estimated_slippage_bps = (order_size / market_depth) * impact_factor * 10000
-        
-        base_price = self.df["ask_price"].iloc[-1] if is_buy else self.df["bid_price"].iloc[-1]
-        executed_price = base_price * (1 + (estimated_slippage_bps / 10000)) if is_buy else base_price * (1 - (estimated_slippage_bps / 10000))
+        for i in range(steps):
+            lob = self.generate_lob_snapshot()
+            ofi = (lob["bid_vol"].sum() - lob["ask_vol"].sum()) / (lob["bid_vol"].sum() + lob["ask_vol"].sum())
+            
+            # Kyle's Lambda Slippage Estimation
+            spread = lob["ask_price"].iloc[0] - lob["bid_price"].iloc[0]
+            slippage_bps = (order_size / lob["ask_vol"].sum()) * 0.05 * 10000
+            
+            executed_price = lob["ask_price"].iloc[0] * (1 + slippage_bps / 10000) if is_buy else lob["bid_price"].iloc[0] * (1 - slippage_bps / 10000)
 
-        return {
-            "Side": "BUY" if is_buy else "SELL",
-            "Order_Size": order_size,
-            "Bid_Ask_Spread": round(spread, 4),
-            "Estimated_Slippage_bps": round(estimated_slippage_bps, 2),
-            "Base_Price": base_price,
-            "Simulated_Execution_Price": round(executed_price, 4)
-        }
+            logs.append({
+                "Step": i + 1,
+                "Spread": round(spread, 4),
+                "OFI_Metric": round(ofi, 4),
+                "Slippage_bps": round(slippage_bps, 2),
+                "Executed_Price": round(executed_price, 4)
+            })
+            time.sleep(0.3)
+
+        df_logs = pd.DataFrame(logs)
+        output_file = "execution_microstructure_log.csv"
+        df_logs.to_csv(output_file, index=False)
+        print(df_logs.to_string(index=False))
+        return output_file
 
 if __name__ == "__main__":
-    # Simulated 5-tick Order Book Snapshot
-    bids = [150.00, 150.01, 150.00, 149.99, 150.02]
-    bid_vols = [1200, 1500, 1100, 900, 1600]
-    asks = [150.03, 150.04, 150.03, 150.02, 150.05]
-    ask_vols = [800, 1000, 750, 600, 1100]
+    parser = argparse.ArgumentParser(description="Order Book Microstructure Simulator")
+    parser.add_argument("--size", type=int, default=10000, help="Order execution size")
+    args = parser.parse_args()
 
-    lob = OrderBookMicrostructure(bids, bid_vols, asks, ask_vols)
-    ofi_score = lob.calculate_order_flow_imbalance()
-    execution = lob.simulate_execution_slippage(order_size=5000, is_buy=True)
-
-    print(f"--- Market Microstructure Engine ---")
-    print(f"Order Flow Imbalance (OFI): {ofi_score:.2f}")
-    for k, v in execution.items():
-        print(f"{k}: {v}")
+    prog = OrderBookMicrostructureProgram(base_price=175.50)
+    log_file = prog.run_simulation(order_size=args.size, is_buy=True)
+    print(f"\n✅ Program completed. Execution logs exported to '{log_file}'.\n")
