@@ -1,6 +1,6 @@
 # Order Book Microstructure Engine
 
-[![CI Pipeline](https://github.com/stefan931025-sys/order-book-microstructure-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/stefan931025-sys/order-book-microstructure-engine/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/stefan931025-sys/order-book-microstructure-engine/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/stefan931025-sys/order-book-microstructure-engine/actions/workflows/ci.yml)
 
 ![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
