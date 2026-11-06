@@ -1,10 +1,9 @@
 # Order Book Microstructure Engine
 
 [![CI Pipeline](https://github.com/stefan931025-sys/order-book-microstructure-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/stefan931025-sys/order-book-microstructure-engine/actions/workflows/ci.yml)
+[![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-
-## Description
+## 📌 Description
 
 Market microstructure analytics suite modeling Limit Order Book (LOB) dynamics, Order Flow Imbalance (OFI), and trade execution slippage.
 
@@ -19,4 +18,4 @@ Market microstructure analytics suite modeling Limit Order Book (LOB) dynamics, 
 ```bash
 git clone [https://github.com/stefan931025-sys/order-book-microstructure-engine.git](https://github.com/stefan931025-sys/order-book-microstructure-engine.git)
 cd order-book-microstructure-engine
-python src/microstructure_exec.py
+python main.py
